@@ -14,6 +14,15 @@ make-request() {
     "${@}"
 }
 
+get-response-status-code() {
+  local log_path
+  log_path="${1}"
+
+  grep "^< HTTP/" "${log_path}" \
+    | tail -1 \
+    | awk '{ print $3 }'
+}
+
 function generate-digits() {
   local S=''
   for i in $(seq 1 "$1") ; do

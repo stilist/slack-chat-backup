@@ -43,7 +43,7 @@ while true ; do
   --form _x_sonic=true \
   >meta/$team_name/boot.json 2>log/$team_name/boot.log
 
-  status_code=$(grep "^< HTTP/" "log/$team_name/boot.log" | awk '{ print $3 }')
+  status_code="$(get-response-status-code "log/${team_name}/boot.log")"
   if [[ $status_code -ne 200 ]]; then
     # try again
     if [[ $status_code -eq 429 ]]; then
@@ -78,7 +78,7 @@ while IFS= read -r u ; do
     --data "{\"token\":\"$token\",\"check_interaction\":true,\"updated_ids\":{\"$u\":0}}" \
     >"meta/$team_name/users/$u.json" 2>"log/$team_name/meta/users/$u.log"
 
-    status_code=$(grep "^< HTTP/" "log/$team_name/meta/users/$u.log" | awk '{ print $3 }')
+    status_code="$(get-response-status-code "log/${team_name}/meta/users/${u}.log")"
     if [[ $status_code -ne 200 ]]; then
       # try again
       if [[ $status_code -eq 429 ]]; then
