@@ -31,7 +31,7 @@ for c in messages/$team_name/*/*; do
       while [[ 1 ]]; do
         make-request "$a" \
            >files/$team_name/$p 2>log/$team_name/$c/download_files.log
-        let status_code=$(cat log/$team_name/$c/download_files.log | grep "^< HTTP/" | awk '{ print $3 }')0/10
+        status_code="$(get-response-status-code "log/${team_name}/${c}/download_files.log")"
         if [[ $status_code -eq 200 ]]; then
           let fcount=$fcount+1
           echo "Job: $c - $a downloaded OK"

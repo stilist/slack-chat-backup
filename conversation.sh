@@ -60,13 +60,20 @@ for i in $@; do
 
   while [[ "X$has_more" == "Xtrue" ]]; do
     x_ts=$(gdate +%s.%3N)
-    boundary='---------------------------'$(generate-digits 29)
     make-request "https://$team_name.slack.com/api/conversations.history?_x_id=$x_id-$x_ts&slack_route=$team_id&_x_version_ts=$x_version_ts" \
-    -H 'Content-Type: multipart/form-data; boundary='$boundary \
-    --data-binary $'--'$boundary$'\r\nContent-Disposition: form-data; name="channel"\r\n\r\n'$i$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="limit"\r\n\r\n42\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="ignore_replies"\r\n\r\ntrue\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="include_pin_count"\r\n\r\ntrue\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="inclusive"\r\n\r\ntrue\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="no_user_profile"\r\n\r\ntrue\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="latest"\r\n\r\n'$latest$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="token"\r\n\r\n'$token$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_reason"\r\n\r\nmessage-pane/requestHistory\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_mode"\r\n\r\nonline\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_sonic"\r\n\r\ntrue\r\n--'$boundary$'--\r\n' \
-    >messages/$team_name/$t/$i/$output.json 2>log/$team_name/$t/$i/$output.log
-
-    status_code=$(cat log/$team_name/$t/$i/$output.log | grep "^< HTTP/" | awk '{ print $3 }')
+      --form _x_mode=online \
+      --form _x_reason=message-pane/requestHistory \
+      --form _x_sonic=true \
+      --form channel="${i}" \
+      --form ignore_replies=true \
+      --form include_pin_count=true \
+      --form inclusive=true \
+      --form latest="${latest}" \
+      --form limit=42 \
+      --form no_user_profile=true \
+      --form token="${token}" \
+      >messages/$team_name/$t/$i/$output.json 2>log/$team_name/$t/$i/$output.log
+    status_code="$(get-response-status-code "log/${team_name}/${t}/${i}/${output}.log")"
     if [[ $status_code -ne 200 ]]; then
       # try again
       if [[ $status_code -eq 429 ]]; then
@@ -90,15 +97,18 @@ for i in $@; do
               continue
             fi
             x_ts=$(gdate +%s.%3N)
-            boundary='---------------------------'$(generate-digits 29)
 
             while [[ 1 ]]; do
               make-request "https://$team_name.slack.com/api/chat.delete?_x_id=$x_id-$x_ts&slack_route=$team_id&_x_version_ts=$x_version_ts" \
-                 -H 'Content-Type: multipart/form-data; boundary='$boundary \
-                 --data-binary $'--'$boundary$'\r\nContent-Disposition: form-data; name="channel"\r\n\r\n'$c_channel$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="ts"\r\n\r\n'$c_ts$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="token"\r\n\r\n'$token$'\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_reason"\r\n\r\nanimateAndDeleteMessageApi\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_mode"\r\n\r\nonline\r\n--'$boundary$'\r\nContent-Disposition: form-data; name="_x_sonic"\r\n\r\ntrue\r\n--'$boundary$'--\r\n' \
-                 >messages/$team_name/$t/$i/purge.json 2>log/$team_name/$t/$i/purge.log
+                --form _x_mode=online \
+                --form _x_reason=animateAndDeleteMessageApi \
+                --form _x_sonic=true \
+                --form channel="${c_channel}" \
+                --form token="${token}" \
+                --form ts="${c_ts}" \
+                >messages/$team_name/$t/$i/purge.json 2>log/$team_name/$t/$i/purge.log
 
-              status_code=$(cat log/$team_name/$t/$i/purge.log | grep "^< HTTP/" | awk '{ print $3 }')
+              status_code="$(get-response-status-code "log/${team_name}/${t}/${i}/purge.log")"
               if [[ $status_code -eq 200 ]]; then
                 echo "$c_ts" >> log/$team_name/$t/$i/purge.done
                 break
@@ -122,7 +132,7 @@ for i in $@; do
             while [[ 1 ]]; do
               make-request "$a" \
                  >files/$team_name/$p 2>log/$team_name/$(dirname $p)/download_files.log
-              let status_code=$(cat log/$team_name/$(dirname $p)/download_files.log | grep "^< HTTP/" | awk '{ print $3 }')0/10
+              status_code="$(get-response-status-code "log/${team_name}/$(dirname "${p}")/download_files.log")"
               if [[ $status_code -eq 200 ]]; then
                 break
               else
