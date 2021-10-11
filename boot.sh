@@ -71,7 +71,7 @@ mkdir -p meta/$team_name/users
 mkdir -p log/$team_name/meta/users
 
 . "./helpers/user-list.sh"
-echo "$(user-list)" \
+user-list \
 | while IFS= read -r u || [ -n "${u}" ] ; do
   echo -n "Loading user profile '$u' .."
   while true ; do
