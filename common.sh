@@ -14,6 +14,22 @@ make-request() {
     "${@}"
 }
 
+make-paginated-request() {
+  local page_count
+  page_count="$(
+    make-request "${@}" \
+      | jq ".pagination.page_count"
+  )"
+
+  local request
+  request="${*}"
+  for page in $(seq "${page_count}") ; do
+    make-request ${request} \
+      --form page="${page}"
+    echo
+  done
+}
+
 get-response-status-code() {
   local log_path
   log_path="${1}"

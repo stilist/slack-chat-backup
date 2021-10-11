@@ -69,8 +69,10 @@ done
 
 mkdir -p meta/$team_name/users
 mkdir -p log/$team_name/meta/users
-for i in $(jq . meta/$team_name/boot.json | grep '"U' | tr -d '":,'); do  if [[ "X$i" == "XU"* ]]; then echo "$i"; fi; done | sort | uniq | grep -v Used > meta/$team_name/users.txt
-while IFS= read -r u ; do
+
+. "./helpers/user-list.sh"
+echo "$(user-list)" \
+| while IFS= read -r u || [ -n "${u}" ] ; do
   echo -n "Loading user profile '$u' .."
   while true ; do
     make-request "https://edgeapi.slack.com/cache/$team_id/users/info" \
@@ -98,4 +100,4 @@ while IFS= read -r u ; do
     fi
   done
   echo
-done < "meta/$team_name/users.txt"
+done
