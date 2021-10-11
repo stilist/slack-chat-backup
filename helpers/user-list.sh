@@ -1,28 +1,6 @@
 #!/bin/bash
 
 ##
-# Fetch list of active users in general channel.
-##
-user-list-general-channel() {
-  local output_file
-  output_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/users.json"
-
-  general_channel_id="$(
-    jq --raw-output \
-      ".channels[] | select(.is_general==true) | .id" \
-      "${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/boot.json"
-  )"
-  make-request "https://edgeapi.slack.com/cache/${team_id:?}/users/list" \
-    --header "Content-Type: application/json" \
-    --data "{\"token\":\"${token:?}\",\"channels\":[\"${general_channel_id}\"],\"filter\":\"everyone AND NOT bots AND NOT apps\",\"count\":500}" \
-    >"${output_file}" \
-    2>"${SLACK_BACKUP_ROOT:?}/log/${team_name:?}/general-channel-users.log"
-  jq --raw-output \
-    ".results[].id" \
-    "${output_file}"
-}
-
-##
 # Extract users from `boot.json`--this may include some deactivated users.
 ##
 user-list-boot-json() {
@@ -78,6 +56,28 @@ user-list-deactivated() {
 }
 
 ##
+# Fetch list of active users in general channel.
+##
+user-list-general-channel() {
+  local output_file
+  output_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/users.json"
+
+  general_channel_id="$(
+    jq --raw-output \
+      ".channels[] | select(.is_general==true) | .id" \
+      "${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/boot.json"
+  )"
+  make-request "https://edgeapi.slack.com/cache/${team_id:?}/users/list" \
+    --header "Content-Type: application/json" \
+    --data "{\"token\":\"${token:?}\",\"channels\":[\"${general_channel_id}\"],\"filter\":\"everyone AND NOT bots AND NOT apps\",\"count\":500}" \
+    >"${output_file}" \
+    2>"${SLACK_BACKUP_ROOT:?}/log/${team_name:?}/general-channel-users.log"
+  jq --raw-output \
+    ".results[].id" \
+    "${output_file}"
+}
+
+##
 # Build a list of users in the Slack. Note that this may be missing some
 # deactivated users.
 ##
@@ -85,10 +85,11 @@ user-list() {
   local temporary_file
   temporary_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/users.txt"
 
-  echo >"${temporary_file}"
-  user-list-general-channel >>"${temporary_file}"
-  user-list-boot-json >>"${temporary_file}"
-  user-list-deactivated >>"${temporary_file}"
+  {
+    user-list-boot-json
+    user-list-deactivated
+    user-list-general-channel
+  } >"${temporary_file}"
 
   # sort and remove blank line
   sort --unique "${temporary_file}" \
