@@ -6,11 +6,11 @@ make-request() {
   curl \
     --silent \
     --verbose \
-    --cookie "cookies/${team_name}.jar" \
+    --cookie "cookies/${team_name:?}.jar" \
     --header "Accept-Language: en-US,en;q=0.5" \
     --header "Accept: */*" \
     --header "Origin: https://app.slack.com" \
-    --header "User-Agent: ${USER_AGENT}" \
+    --header "User-Agent: ${USER_AGENT:?}" \
     "${@}"
 }
 
