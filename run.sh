@@ -49,7 +49,7 @@ else
   comm="test"
 fi
 
-export SLACK_BACKUP_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+export SLACK_BACKUP_ROOT=$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd $SLACK_BACKUP_ROOT
 
 export SLACK_BACKUP_CONFIG="config.sh"

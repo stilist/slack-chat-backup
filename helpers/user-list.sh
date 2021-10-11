@@ -1,24 +1,22 @@
 #!/bin/bash
 
-root_path="$(dirname -- "${BASH_SOURCE[0]}")/.."
-
 ##
 # Fetch list of active users in general channel.
 ##
 user-list-general-channel() {
   local output_file
-  output_file="${root_path}/meta/${team_name:?}/users.json"
+  output_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/users.json"
 
   general_channel_id="$(
     jq --raw-output \
       ".channels[] | select(.is_general==true) | .id" \
-      "${root_path}/meta/${team_name:?}/boot.json"
+      "${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/boot.json"
   )"
   make-request "https://edgeapi.slack.com/cache/${team_id:?}/users/list" \
     --header "Content-Type: application/json" \
     --data "{\"token\":\"${token:?}\",\"channels\":[\"${general_channel_id}\"],\"filter\":\"everyone AND NOT bots AND NOT apps\",\"count\":500}" \
     >"${output_file}" \
-    2>"${root_path}/log/${team_name:?}/general-channel-users.log"
+    2>"${SLACK_BACKUP_ROOT:?}/log/${team_name:?}/general-channel-users.log"
   jq --raw-output \
     ".results[].id" \
     "${output_file}"
@@ -35,7 +33,7 @@ user-list-boot-json() {
       .ims[].user,
       .mpims[].members[]
     " \
-    "${root_path}/meta/${team_name:?}/boot.json"
+    "${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/boot.json"
 }
 
 ##
@@ -43,7 +41,7 @@ user-list-boot-json() {
 ##
 user-list-deactivated() {
   local output_file
-  output_file="${root_path}/meta/${team_name:?}/deactivated-users.json"
+  output_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/deactivated-users.json"
 
   # account types:
   # 1 - all types
@@ -73,7 +71,7 @@ user-list-deactivated() {
     --form team="${team_id:?}" \
     --form token="${token:?}" \
     >"${output_file}" \
-    2>"${root_path}/log/${team_name:?}/boot.log"
+    2>"${SLACK_BACKUP_ROOT:?}/log/${team_name:?}/boot.log"
   jq --raw-output \
     ".items[].id" \
     "${output_file}"
@@ -85,7 +83,7 @@ user-list-deactivated() {
 ##
 user-list() {
   local temporary_file
-  temporary_file="${root_path}/meta/${team_name:?}/users.txt"
+  temporary_file="${SLACK_BACKUP_ROOT:?}/meta/${team_name:?}/users.txt"
 
   echo >"${temporary_file}"
   user-list-general-channel >>"${temporary_file}"
